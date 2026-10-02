@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: creditflow
+  datasource:
+    url: jdbc:postgresql://localhost:5432/creditflow
+    username: creditflow_user
+    password: creditflow_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8080
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      fraudEngine:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5000
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+      riskBureau:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5000
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+  timelimiter:
+    instances:
+      fraudEngine:
+        timeoutDuration: 2000
+      riskBureau:
+        timeoutDuration: 3000
+  retry:
+    instances:
+      fraudEngine:
+        maxAttempts: 3
+        waitDuration: 1000
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      riskBureau:
+        maxAttempts: 3
+        waitDuration: 1000
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  fraud-engine:
+    base-url: http://localhost:8081
+    endpoint: /api/fraud-check
+  risk-bureau:
+    base-url: http://localhost:8082
+    endpoint: /api/risk-assessment
+  circuit-breaker:
+    failure-rate-threshold: 50
+    wait-duration-in-open-state: 5000
+    sliding-window-size: 10
+  timeout:
+    duration: 2000
